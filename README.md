@@ -1,5 +1,7 @@
 # anzu2.el
 
+This is my own anzu.el implementation
+
 ## Introduction
 
 `anzu2.el` is an Emacs port of [anzu.vim](https://github.com/osyo-manga/vim-anzu).
