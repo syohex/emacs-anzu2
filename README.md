@@ -151,10 +151,6 @@ Commands which have regexp input. If the last command is a member of this list,
 
 The default value is `'(isearch-forward-regexp isearch-backward-regexp)`.
 
-##### `anzu2-use-migemo`(Default is `nil`)
-
-Set to `t` if you use [migemo](https://github.com/emacs-jp/migemo).
-
 ##### `anzu2-search-threshold`(Default is `nil`)
 
 Threshold of searched words. If there are searched word more than this value,
@@ -169,9 +165,7 @@ Threshold of replacement overlay. If this value is `nil`,
 
 ##### `anzu2-minimum-input-length`(Default is 1)
 
-Minimum input length to enable anzu. This parameter is useful for `migemo` users.
-Searching 1 or 2 characters with `migemo` is too heavy if buffer is so large.
-Please set 3 or higher if you frequently edit such file.
+Minimum input length to enable anzu.
 
 ##### `anzu2-deactivate-region`(Default is `nil`)
 

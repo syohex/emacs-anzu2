@@ -39,8 +39,6 @@
 (require 'cl-lib)
 (require 'thingatpt)
 
-(declare-function migemo-forward 'migemo)
-
 (defgroup anzu2 nil
   "Show searched position in mode-line"
   :group 'isearch)
@@ -66,10 +64,6 @@
   "Limit of replacement overlays."
   :type '(choice (integer :tag "Threshold of replacement overlays")
                  (const :tag "No threshold" nil)))
-
-(defcustom anzu2-use-migemo nil
-  "Flag of using migemo"
-  :type 'boolean)
 
 (defcustom anzu2-mode-line-update-function #'anzu2--update-mode-line-default
   "Function which return mode-line string. This must be non-nil."
@@ -184,12 +178,6 @@
          (setq str (regexp-quote str)))
         (t str)))
 
-(defsubst anzu2--use-migemo-p ()
-  (when anzu2-use-migemo
-    (unless (featurep 'migemo)
-      (error "Error: migemo is not loaded"))
-    (bound-and-true-p migemo-isearch-enable-p)))
-
 (defun anzu2--search-all-position (str)
   (unless anzu2--last-command
     (setq anzu2--last-command last-command))
@@ -202,13 +190,8 @@
               (count 0)
               (overflow nil)
               (finish nil)
-              (search-func (if (anzu2--use-migemo-p)
-                               (lambda (word &optional bound noerror count)
-                                 (ignore-errors
-                                   (migemo-forward word bound noerror count)))
-                             #'re-search-forward))
               (case-fold-search (anzu2--case-fold-search input)))
-          (while (and (not finish) (funcall search-func input nil t))
+          (while (and (not finish) (re-search-forward input nil t))
             (push (cons (match-beginning 0) (match-end 0)) positions)
             (cl-incf count)
             (when (= (match-beginning 0) (match-end 0)) ;; Case of anchor such as "^"
