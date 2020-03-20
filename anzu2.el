@@ -159,7 +159,7 @@
   (list :count count :overflow overflow :positions positions))
 
 (defsubst anzu2--case-fold-search (input)
-  (when case-fold-search
+  (when isearch-case-fold-search
     (let ((case-fold-search nil))
       (not (string-match-p "[A-Z]" input)))))
 
@@ -511,11 +511,11 @@
   (let ((compiled (ignore-errors
                     (query-replace-compile-replacement str t))))
     (when compiled
-      (cond  ((stringp compiled) compiled)
-             ((and (consp compiled) (functionp (car compiled)))
-              compiled)
-             ((and (consp compiled) (stringp (car compiled)))
-              (car compiled))))))
+      (cond ((stringp compiled) compiled)
+            ((and (consp compiled) (functionp (car compiled)))
+             compiled)
+            ((and (consp compiled) (stringp (car compiled)))
+             (car compiled))))))
 
 (defun anzu2--evaluate-occurrence (ov to-regexp replacements fixed-case from-regexp)
   (let ((from-string (overlay-get ov 'from-string))
@@ -757,8 +757,11 @@
                             (setq from (car from)
                                   anzu2--total-matched anzu2--last-replaced-count)))
                          ((string-match "\0" from)
-                          (prog1 (substring-no-properties from (match-end 0))
-                            (setq from (substring-no-properties from 0 (match-beginning 0)))))
+                          (let ((replaced (substring-no-properties from (match-end 0))))
+                            (setq from (substring-no-properties from 0 (match-beginning 0)))
+                            (if use-regexp
+                                (anzu2--compile-replace-text replaced)
+                              replaced)))
                          (t
                           (anzu2--query-replace-read-to
                            from prompt beg end use-regexp overlay-limit)))))
