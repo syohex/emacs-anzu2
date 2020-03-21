@@ -158,10 +158,12 @@
 (defsubst anzu2--construct-position-info (count overflow positions)
   (list :count count :overflow overflow :positions positions))
 
-(defsubst anzu2--case-fold-search (input)
-  (when isearch-case-fold-search
-    (let ((case-fold-search nil))
-      (not (string-match-p "[A-Z]" input)))))
+(defun anzu2--case-fold-search (input)
+  (if isearch-mode
+      isearch-case-fold-search
+    (when case-fold-search
+      (let ((case-fold-search nil))
+        (not (string-match-p "[A-Z]" input))))))
 
 (defsubst anzu2--word-search-p ()
   (and (not (memq anzu2--last-command anzu2-regexp-search-commands))
