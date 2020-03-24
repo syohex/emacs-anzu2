@@ -1,4 +1,4 @@
-# anzu2.el
+# anzu2.el  ![](https://github.com/syohex/emacs-anzu2/workflows/CI/badge.svg)
 
 This is my own anzu.el implementation
 
