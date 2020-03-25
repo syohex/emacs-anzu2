@@ -14,11 +14,6 @@ information in the mode-line in various search modes.
 ![Screencast of anzu.gif](image/anzu.gif)
 
 
-## Requirements
-
-- Emacs 26.1 or higher
-
-
 ## Basic Usage
 
 ##### `global-anzu2-mode`

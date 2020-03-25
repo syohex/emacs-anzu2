@@ -684,11 +684,8 @@
         ((and at-cursor (not thing)) 'symbol)
         (t nil)))
 
-(defun anzu2--replace-backward-p (prefix)
-  ;; This variable is introduced at Emacs 24.4, I should fix this variable to
-  ;; version variable
-  (and (boundp 'list-matching-lines-prefix-face)
-       (and prefix (< prefix 0))))
+(defsubst anzu2--replace-backward-p (prefix)
+  (and prefix (< prefix 0)))
 
 (defun anzu2--construct-perform-replace-arguments (from to delimited beg end backward query)
   (if backward
