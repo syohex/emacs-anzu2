@@ -651,24 +651,24 @@
   (add-to-history query-replace-from-history-variable isearch-string nil t)
   isearch-string)
 
-(defun anzu2--thing-begin (thing)
+(defun anzu2--thing-begin (thing backward)
   (let ((bound (bounds-of-thing-at-point thing)))
     (if bound
-        (car bound)
+        (if backward (cdr bound) (car bound))
       (let ((fallback-bound (bounds-of-thing-at-point 'symbol)))
         (if fallback-bound
-            (car fallback-bound)
+            (if backward (cdr bound) (car fallback-bound))
           (point))))))
 
-(defsubst anzu2--thing-end (thing)
+(defsubst anzu2--thing-end (thing backward)
   (let ((bound (bounds-of-thing-at-point thing)))
     (if bound
-        (cdr bound)
+        (if backward (car bound) (cdr bound))
       (point-max))))
 
 (defun anzu2--region-begin (use-region thing backward)
   (cond (use-region (region-beginning))
-        (thing (anzu2--thing-begin thing))
+        (thing (anzu2--thing-begin thing backward))
         (backward (point))
         (current-prefix-arg (line-beginning-position))
         (t (point))))
@@ -683,7 +683,7 @@
         (backward (point-min))
         (current-prefix-arg
          (anzu2--line-end-position (prefix-numeric-value current-prefix-arg)))
-        (thing (anzu2--thing-end thing))
+        (thing (anzu2--thing-end thing backward))
         (t (point-max))))
 
 (defun anzu2--begin-thing (at-cursor thing)
@@ -796,10 +796,10 @@
         (force-mode-line-update)))))
 
 ;;;###autoload
-(defun anzu2-query-replace-at-cursor ()
+(defun anzu2-query-replace-at-cursor (arg)
   "Replace symbol at cursor with to-string."
-  (interactive)
-  (anzu2--query-replace-common t :at-cursor t))
+  (interactive "p")
+  (anzu2--query-replace-common t :at-cursor t :prefix-arg arg))
 
 ;;;###autoload
 (defun anzu2-query-replace-at-cursor-thing ()
