@@ -372,24 +372,28 @@
       anzu2--cached-count
     (with-current-buffer buf
       (save-excursion
-        (let* ((overlay-beg replace-beg)
-               (overlay-end (min replace-end overlay-limit)))
-          (goto-char overlay-beg)
+        (let* ((backward (> replace-beg replace-end))
+               (overlay-beg (if backward (max replace-end overlay-limit) replace-beg))
+               (overlay-end (if backward replace-beg (min replace-end overlay-limit))))
+          (goto-char replace-beg)
           (let ((count 0)
                 (overlayed 0)
                 (finish nil)
+                (cmp-func (if backward #'< #'>))
+                (search-func (if backward #'re-search-backward #'re-search-forward))
+                (step (if backward -1 1))
                 (case-fold-search (if case-sensitive
                                       nil
                                     (anzu2--case-fold-search str))))
-            (while (and (not finish) (re-search-forward str replace-end t))
+            (while (and (not finish) (funcall search-func str replace-end t))
               (cl-incf count)
               (let ((beg (match-beginning 0))
                     (end (match-end 0)))
                 (when (= beg end)
                   (if (eobp)
                       (setq finish t)
-                    (forward-char 1)))
-                (when (and replace-end (> (point) replace-end))
+                    (forward-char step)))
+                (when (and replace-end (funcall cmp-func (point) replace-end))
                   (setq finish t))
                 (when (and (>= beg overlay-beg) (<= end overlay-end) (not finish))
                   (cl-incf overlayed)
@@ -398,13 +402,15 @@
             overlayed))))))
 
 (defun anzu2--search-outside-visible (buf input beg end use-regexp)
-  (let ((searchfn (if use-regexp #'re-search-forward #'search-forward)))
-    (when (or (not use-regexp) (anzu2--validate-regexp input))
+  (let* ((regexp (if use-regexp input (regexp-quote input)))
+         (backward (> beg end))
+         (searchfn (if backward #'re-search-backward #'re-search-forward)))
+    (when (anzu2--validate-regexp regexp)
       (with-selected-window (get-buffer-window buf)
         (goto-char beg)
-        (when (funcall searchfn input end t)
+        (when (funcall searchfn regexp end t)
           (setq anzu2--outside-point (match-beginning 0))
-          (let ((overlay-limit (anzu2--overlay-limit)))
+          (let ((overlay-limit (anzu2--overlay-limit backward)))
             (anzu2--count-and-highlight-matched buf input beg end use-regexp
                                                 overlay-limit nil)))))))
 
@@ -540,7 +546,7 @@
   (< (overlay-start a) (overlay-start b)))
 
 (defsubst anzu2--overlays-in-range (beg end)
-  (cl-loop for ov in (overlays-in beg end)
+  (cl-loop for ov in (overlays-in (min beg end) (max beg end))
            when (overlay-get ov 'anzu2-replace)
            collect ov into anzu2-overlays
            finally
@@ -622,10 +628,10 @@
      to)
    use-regexp))
 
-(defun anzu2--overlay-limit ()
+(defun anzu2--overlay-limit (backward)
   (save-excursion
-    (move-to-window-line -1)
-    (forward-line 1)
+    (move-to-window-line (if backward 1 -1))
+    (forward-line (if backward -1 1))
     (point)))
 
 (defun anzu2--query-from-at-cursor (buf beg end overlay-limit)
@@ -662,9 +668,9 @@
 
 (defun anzu2--region-begin (use-region thing backward)
   (cond (use-region (region-beginning))
-        (current-prefix-arg (line-beginning-position))
         (thing (anzu2--thing-begin thing))
-        (backward (point-min))
+        (backward (point))
+        (current-prefix-arg (line-beginning-position))
         (t (point))))
 
 (defsubst anzu2--line-end-position (num)
@@ -672,8 +678,9 @@
     (forward-line (1- num))
     (line-end-position)))
 
-(defun anzu2--region-end (use-region thing)
+(defun anzu2--region-end (use-region thing backward)
   (cond (use-region (region-end))
+        (backward (point-min))
         (current-prefix-arg
          (anzu2--line-end-position (prefix-numeric-value current-prefix-arg)))
         (thing (anzu2--thing-end thing))
@@ -715,16 +722,20 @@
   (save-excursion
     (goto-char beg)
     (cl-loop with curbuf = (current-buffer)
-             with search-func = (if use-regexp #'re-search-forward #'search-forward)
-             while (funcall search-func from end t)
+             with backward = (> beg end)
+             with input = (if use-regexp from (regexp-quote from))
+             with search-func = (if backward #'re-search-backward #'re-search-forward)
+             with cmp-func = (if backward #'< #'>)
+             with step = (if backward -1 1)
+             while (funcall search-func input end t)
              do
              (progn
                (anzu2--set-marker (match-beginning 0) curbuf)
                (when (= (match-beginning 0) (match-end 0))
                  (if (eobp)
                      (cl-return nil)
-                   (forward-char 1)))
-               (when (and end (> (point) end))
+                   (forward-char step)))
+               (when (and end (funcall cmp-func (point) end))
                  (cl-return nil))))))
 
 (cl-defun anzu2--query-replace-common (use-regexp
@@ -733,9 +744,9 @@
   (let* ((use-region (use-region-p))
          (orig-point (point))
          (backward (anzu2--replace-backward-p prefix-arg))
-         (overlay-limit (anzu2--overlay-limit))
+         (overlay-limit (anzu2--overlay-limit backward))
          (beg (anzu2--region-begin use-region (anzu2--begin-thing at-cursor thing) backward))
-         (end (anzu2--region-end use-region thing))
+         (end (anzu2--region-end use-region thing backward))
          (prompt (anzu2--query-prompt use-region use-regexp at-cursor isearch-p))
          (delimited (and current-prefix-arg (not (eq current-prefix-arg '-))))
          (curbuf (current-buffer))
@@ -764,7 +775,7 @@
                          (t
                           (anzu2--query-replace-read-to
                            from prompt beg end use-regexp overlay-limit)))))
-          (anzu2--clear-overlays curbuf beg end)
+          (anzu2--clear-overlays curbuf (min beg end) (max beg end))
           (anzu2--set-replaced-markers from beg end use-regexp)
           (setq anzu2--state 'replace anzu2--current-position 0
                 anzu2--replaced-markers (reverse anzu2--replaced-markers)
@@ -777,7 +788,7 @@
                                       from to delimited beg end backward)))))
       (progn
         (unless clear-overlay
-          (anzu2--clear-overlays curbuf beg end))
+          (anzu2--clear-overlays curbuf (min beg end) (max beg end)))
         (when (zerop anzu2--current-position)
           (goto-char orig-point))
         (anzu2--cleanup-markers)
