@@ -148,11 +148,10 @@ Commands which have regexp input. If the last command is a member of this list,
 
 The default value is `'(isearch-forward-regexp isearch-backward-regexp)`.
 
-##### `anzu2-search-threshold`(Default is `nil`)
+##### `anzu2-search-threshold`(Default is `1000`)
 
 Threshold of searched words. If there are searched word more than this value,
 `anzu2.el` stops to search and display total number like `1000+`(as default).
-If this value is `nil`, `anzu2.el` counts all words.
 
 ![anzu2-threshold](image/anzu2-threshold.png)
 
