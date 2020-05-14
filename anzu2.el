@@ -59,10 +59,9 @@
   "Limit of search number"
   :type 'integer)
 
-(defcustom anzu2-replace-threshold nil
+(defcustom anzu2-replace-threshold 50
   "Limit of replacement overlays."
-  :type '(choice (integer :tag "Threshold of replacement overlays")
-                 (const :tag "No threshold" nil)))
+  :type 'integer)
 
 (defcustom anzu2-mode-line-update-function #'anzu2--update-mode-line-default
   "Function which return mode-line string. This must be non-nil."
@@ -551,9 +550,7 @@
            finally
            return
            (let ((sorted (sort anzu2-overlays 'anzu2--overlay-sort)))
-             (if anzu2-replace-threshold
-                 (cl-subseq sorted 0 (min (length sorted) anzu2-replace-threshold))
-               sorted))))
+             (cl-subseq sorted 0 (min (length sorted) anzu2-replace-threshold)))))
 
 (defsubst anzu2--propertize-to-string (str)
   (let ((separator (or anzu2-replace-to-string-separator "")))
