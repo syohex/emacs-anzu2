@@ -55,10 +55,9 @@
   "Minimum input length to enable anzu"
   :type 'integer)
 
-(defcustom anzu2-search-threshold nil
+(defcustom anzu2-search-threshold 1000
   "Limit of search number"
-  :type '(choice (integer :tag "Threshold of search")
-                 (const :tag "No threshold" nil)))
+  :type 'integer)
 
 (defcustom anzu2-replace-threshold nil
   "Limit of replacement overlays."
@@ -200,7 +199,7 @@
               (if (eobp)
                   (setq finish t)
                 (forward-char 1)))
-            (when (and anzu2-search-threshold (>= count anzu2-search-threshold))
+            (when (>= count anzu2-search-threshold)
               (setq overflow t finish t)))
           (let ((result (anzu2--construct-position-info count overflow (reverse positions))))
             (setq anzu2--cached-positions (copy-sequence result))
