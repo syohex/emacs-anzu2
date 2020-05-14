@@ -155,9 +155,9 @@ Threshold of searched words. If there are searched word more than this value,
 
 ![anzu2-threshold](image/anzu2-threshold.png)
 
-##### `anzu2-replace-threshold`(Default is `nil`)
+##### `anzu2-replace-threshold`(Default is `50`)
 
-Threshold of replacement overlay. If this value is `nil`,
+Threshold of replacement overlays.
 
 ##### `anzu2-minimum-input-length`(Default is 1)
 
