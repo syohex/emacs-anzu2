@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2020 by Shohei YOSHIDA
 
-;; Author: Syohei YOSHIDA <syohex@gmail.com>
+;; Author: Shohei YOSHIDA <syohex@gmail.com>
 ;; URL: https://github.com/syohex/emacs-anzu2
 ;; Version: 0.62
 ;; Package-Requires: ((emacs "26.3"))
@@ -38,6 +38,7 @@
 
 (require 'cl-lib)
 (require 'thingatpt)
+(require 'subr-x)
 
 (defgroup anzu2 nil
   "Show searched position in mode-line"
@@ -46,10 +47,6 @@
 (defcustom anzu2-mode-lighter " Anzu2"
   "Lighter of anzu2-mode"
   :type 'string)
-
-(defcustom anzu2-cons-mode-line-p t
-  "Set nil if you use your own mode-line setting"
-  :type 'boolean)
 
 (defcustom anzu2-minimum-input-length 1
   "Minimum input length to enable anzu"
@@ -63,10 +60,6 @@
   "Limit of replacement overlays."
   :type 'integer)
 
-(defcustom anzu2-mode-line-update-function #'anzu2--update-mode-line-default
-  "Function which return mode-line string. This must be non-nil."
-  :type 'function)
-
 (defcustom anzu2-regexp-search-commands '(isearch-forward-regexp
                                           isearch-backward-regexp)
   "Search function which use regexp."
@@ -76,17 +69,9 @@
   "Idle second for updating modeline at replace commands"
   :type 'number)
 
-(defcustom anzu2-deactivate-region nil
-  "Deactive region if you use anzu a replace command with region"
-  :type 'boolean)
-
 (defcustom anzu2-replace-at-cursor-thing 'defun
   "Replace thing. This parameter is same as `thing-at-point'"
   :type 'symbol)
-
-(defcustom anzu2-replace-to-string-separator ""
-  "Separator of `to' string"
-  :type 'string)
 
 (defface anzu2-mode-line
   '((t (:foreground "magenta" :weight bold)))
@@ -240,7 +225,7 @@
 (defconst anzu2--mode-line-format '(:eval (anzu2--update-mode-line)))
 
 (defsubst anzu2--mode-line-not-set-p ()
-  (and (listp mode-line-format)
+  (and (consp mode-line-format)
        (member anzu2--mode-line-format mode-line-format)))
 
 (defun anzu2--cons-mode-line-search ()
@@ -248,7 +233,7 @@
 
 (defun anzu2--cons-mode-line (state)
   (setq anzu2--state state)
-  (when (and anzu2-cons-mode-line-p (not (anzu2--mode-line-not-set-p)))
+  (when (not (anzu2--mode-line-not-set-p))
     (setq mode-line-format (cons anzu2--mode-line-format mode-line-format))))
 
 (defsubst anzu2--reset-status ()
@@ -261,29 +246,27 @@
 
 (defun anzu2--reset-mode-line ()
   (anzu2--reset-status)
-  (when (and anzu2-cons-mode-line-p (anzu2--mode-line-not-set-p))
+  (when (anzu2--mode-line-not-set-p)
     (setq mode-line-format (delete anzu2--mode-line-format mode-line-format))))
 
-(defsubst anzu2--format-here-position (here total)
+(defun anzu2--format-here-position (here total)
   (if (and anzu2--overflow-p (zerop here))
       (format "%d+" total)
     here))
 
-(defun anzu2--update-mode-line-default (here total)
+(defun anzu2--update-mode-line ()
   (when anzu2--state
     (let ((status (cl-case anzu2--state
                     (search (format "(%s/%d%s)"
-                                    (anzu2--format-here-position here total)
-                                    total (if anzu2--overflow-p "+" "")))
-                    (replace-query (format "(%d replace)" total))
-                    (replace (format "(%d/%d)" here total))))
-          (face (if (and (zerop total) (not (string= isearch-string "")))
+                                    (anzu2--format-here-position
+                                     anzu2--current-position anzu2--total-matched)
+                                    anzu2--total-matched (if anzu2--overflow-p "+" "")))
+                    (replace-query (format "(%d replace)" anzu2--total-matched))
+                    (replace (format "(%d/%d)" anzu2--current-position anzu2--total-matched))))
+          (face (if (and (zerop anzu2--total-matched) (not (string-empty-p isearch-string)))
                     'anzu2-mode-line-no-match
                   'anzu2-mode-line)))
       (propertize status 'face face))))
-
-(defun anzu2--update-mode-line ()
-  (funcall anzu2-mode-line-update-function anzu2--current-position anzu2--total-matched))
 
 ;;;###autoload
 (define-minor-mode anzu2-mode
@@ -429,7 +412,7 @@
                (substring-no-properties content (match-end 0))))
          (from (or (and to (substring-no-properties content 0 (match-beginning 0)))
                    content))
-         (empty-p (string= from ""))
+         (empty-p (string-empty-p from))
          (overlayed (if empty-p
                         (setq anzu2--cached-count 0)
                       (anzu2--count-and-highlight-matched buf from beg end use-regexp
@@ -499,7 +482,7 @@
 
 (defun anzu2--query-from-string (prompt beg end use-regexp overlay-limit)
   (let* ((from (anzu2--read-from-string prompt beg end use-regexp overlay-limit))
-         (is-empty (string= from "")))
+         (is-empty (string-empty-p from)))
     (when (and (not is-empty) (not anzu2--query-defaults))
       (setq anzu2--last-replaced-count anzu2--total-matched))
     (if (and is-empty anzu2--query-defaults)
@@ -552,10 +535,6 @@
            (let ((sorted (sort anzu2-overlays 'anzu2--overlay-sort)))
              (cl-subseq sorted 0 (min (length sorted) anzu2-replace-threshold)))))
 
-(defsubst anzu2--propertize-to-string (str)
-  (let ((separator (or anzu2-replace-to-string-separator "")))
-    (propertize (concat separator str) 'face 'anzu2-replace-to)))
-
 (defsubst anzu2--replaced-literal-string (ov replaced from)
   (let ((str (buffer-substring-no-properties
               (overlay-start ov) (overlay-end ov))))
@@ -575,7 +554,8 @@
                      (prog1 (anzu2--evaluate-occurrence ov content replacements
                                                         (not case-fold-search) from)
                        (cl-incf replacements)))))
-              (overlay-put ov 'after-string (anzu2--propertize-to-string replace-evaled)))))))))
+              (overlay-put ov 'after-string
+                           (propertize (concat " => " replace-evaled) 'face 'anzu2-replace-to)))))))))
 
 (defsubst anzu2--outside-overlay-limit (orig-beg orig-limit)
   (save-excursion
@@ -747,7 +727,7 @@
          (delimited (and current-prefix-arg (not (eq current-prefix-arg '-))))
          (curbuf (current-buffer))
          (clear-overlay nil))
-    (when (and anzu2-deactivate-region use-region)
+    (when use-region
       (deactivate-mark t))
     (unwind-protect
         (let* ((from (cond ((and at-cursor beg)
