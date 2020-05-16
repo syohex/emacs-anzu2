@@ -95,38 +95,6 @@ Face of from-string of replacement
 
 Face of to-string of replacement
 
-##### `anzu2-mode-line-update-function`
-
-Function which constructs mode-line string. anzu2.el puts its output to mode-line. It is called at searching, inputting replaced word, replacing. This must be non-nil.
-
-The function takes 2 integer arguments, current position and total match number. You can get current-state from `anzu2--state`(`'search`, `'replace-query`, `replace`).
-
-```lisp
-(defun my/anzu2-update-func (here total)
-  (when anzu2--state
-    (let ((status (cl-case anzu2--state
-                    (search (format "<%d/%d>" here total))
-                    (replace-query (format "(%d Replaces)" total))
-                    (replace (format "<%d/%d>" here total)))))
-      (propertize status 'face 'anzu2-mode-line))))
-
-(custom-set-variables
- '(anzu2-mode-line-update-function #'my/anzu2-update-func))
-```
-
-##### `anzu2-cons-mode-line-p`(Default is `t`)
-
-Set `nil` if you want to display anzu information at any position in mode-line.
-`anzu2.el` cons search information head of `mode-line` as default.
-
-For example, show search information tail of `minor-mode-alist`
-
-```lisp
-(setq anzu2-cons-mode-line-p nil)
-(setcar (cdr (assq 'isearch-mode minor-mode-alist))
-        '(:eval (anzu2--update-mode-line)))
-```
-
 ##### Screenshot
 
 ![anzu2-any-position](image/anzu2-any-position.png)
@@ -163,20 +131,10 @@ Threshold of replacement overlays.
 
 Minimum input length to enable anzu.
 
-##### `anzu2-deactivate-region`(Default is `nil`)
-
-Deactivate region at anzu replace command if this value is non-nil.
-It is hard to see with anzu replace command when region is active.
-
-
 ##### `anzu2-replace-at-cursor-thing`(Default is 'defun)
 
 Thing at point of `anzu2-query-replace-at-cursor-thing`.
 This parameter is same as `thing-at-point`.
-
-##### `anzu2-replace-to-string-separator`(Default is "")
-
-Separator of `to` string.
 
 
 ## Sample Configuration
@@ -190,10 +148,8 @@ Separator of `to` string.
 
 (custom-set-variables
  '(anzu2-mode-lighter "")
- '(anzu2-deactivate-region t)
  '(anzu2-search-threshold 1000)
- '(anzu2-replace-threshold 50)
- '(anzu2-replace-to-string-separator " => "))
+ '(anzu2-replace-threshold 50))
 
 (define-key isearch-mode-map [remap isearch-query-replace]  #'anzu2-isearch-query-replace)
 (define-key isearch-mode-map [remap isearch-query-replace-regexp] #'anzu2-isearch-query-replace-regexp)
