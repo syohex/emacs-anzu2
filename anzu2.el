@@ -130,6 +130,7 @@
 (defvar anzu2--outside-point nil)
 (defvar anzu2--history nil)
 (defvar anzu2--query-defaults nil)
+(defvar anzu2--region-noncontiguous nil)
 
 (defun anzu2--validate-regexp (regexp)
   (condition-case nil
@@ -343,6 +344,14 @@
   (mapc (lambda (m) (set-marker m nil)) anzu2--replaced-markers)
   (setq anzu2--replaced-markers nil))
 
+(defun anzu2--put-overlay-p (beg end overlay-beg overlay-end)
+  (if anzu2--region-noncontiguous
+      (cl-loop for (b . e) in (cl-loop for region in anzu2--region-noncontiguous
+                                       when (and (>= (car region) overlay-beg) (<= (cdr region) overlay-end))
+                                       collect region)
+               thereis (and (>= beg b overlay-beg) (<= end e overlay-end)))
+    (and (>= beg overlay-beg) (<= end overlay-end))))
+
 ;; Return highlighted count
 (defun anzu2--count-and-highlight-matched (buf str replace-beg replace-end
                                                use-regexp overlay-limit case-sensitive)
@@ -367,7 +376,11 @@
                                       nil
                                     (anzu2--case-fold-search str))))
             (while (and (not finish) (funcall search-func str replace-end t))
-              (cl-incf count)
+              (if anzu2--region-noncontiguous
+                  (when (cl-loop for (b . e) in anzu2--region-noncontiguous
+                                 thereis (and (>= (point) b) (<= (point) e)))
+                    (cl-incf count))
+                (cl-incf count))
               (let ((beg (match-beginning 0))
                     (end (match-end 0)))
                 (when (= beg end)
@@ -376,7 +389,7 @@
                     (forward-char step)))
                 (when (and replace-end (funcall cmp-func (point) replace-end))
                   (setq finish t))
-                (when (and (>= beg overlay-beg) (<= end overlay-end) (not finish))
+                (when (and (not finish) (anzu2--put-overlay-p beg end overlay-beg overlay-end))
                   (cl-incf overlayed)
                   (anzu2--add-overlay beg end))))
             (setq anzu2--cached-count count)
@@ -672,13 +685,13 @@
 
 (defun anzu2--construct-perform-replace-arguments (from to delimited beg end backward query)
   (if backward
-      (list from to query t delimited nil nil beg end backward)
-    (list from to query t delimited nil nil beg end)))
+      (list from to query t delimited nil nil beg end backward anzu2--region-noncontiguous)
+    (list from to query t delimited nil nil beg end nil anzu2--region-noncontiguous)))
 
 (defun anzu2--construct-query-replace-arguments (from to delimited beg end backward)
   (if backward
-      (list from to delimited beg end backward)
-    (list from to delimited beg end)))
+      (list from to delimited beg end backward anzu2--region-noncontiguous)
+    (list from to delimited beg end nil anzu2--region-noncontiguous)))
 
 (defsubst anzu2--current-replaced-index (curpoint)
   (cl-loop for m in anzu2--replaced-markers
@@ -717,6 +730,8 @@
 (cl-defun anzu2--query-replace-common (use-regexp
                                        &key at-cursor thing prefix-arg (query t) isearch-p)
   (anzu2--cons-mode-line 'replace-query)
+  (when (and (use-region-p) (region-noncontiguous-p))
+    (setq anzu2--region-noncontiguous (funcall region-extract-function 'bounds)))
   (let* ((use-region (use-region-p))
          (orig-point (point))
          (backward (anzu2--replace-backward-p prefix-arg))
@@ -727,7 +742,7 @@
          (delimited (and current-prefix-arg (not (eq current-prefix-arg '-))))
          (curbuf (current-buffer))
          (clear-overlay nil))
-    (when use-region
+    (when (and use-region (not anzu2--region-noncontiguous))
       (deactivate-mark t))
     (unwind-protect
         (let* ((from (cond ((and at-cursor beg)
