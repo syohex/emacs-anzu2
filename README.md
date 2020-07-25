@@ -97,7 +97,7 @@ Face of to-string of replacement
 
 ##### Screenshot
 
-![anzu2-any-position](image/anzu2-any-position.png)
+![anzu2-any-position](image/anzu-any-position.png)
 
 
 ##### `anzu2-mode-lighter`
@@ -121,7 +121,7 @@ The default value is `'(isearch-forward-regexp isearch-backward-regexp)`.
 Threshold of searched words. If there are searched word more than this value,
 `anzu2.el` stops to search and display total number like `1000+`(as default).
 
-![anzu2-threshold](image/anzu2-threshold.png)
+![anzu2-threshold](image/anzu-threshold.png)
 
 ##### `anzu2-replace-threshold`(Default is `50`)
 
