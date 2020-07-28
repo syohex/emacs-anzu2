@@ -243,7 +243,8 @@
         anzu2--state nil
         anzu2--last-command nil
         anzu2--last-isearch-string nil
-        anzu2--overflow-p nil))
+        anzu2--overflow-p nil
+        anzu2--region-noncontiguous nil))
 
 (defun anzu2--reset-mode-line ()
   (anzu2--reset-status)
