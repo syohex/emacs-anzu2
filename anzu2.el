@@ -773,6 +773,11 @@
                 anzu2--replaced-markers (reverse anzu2--replaced-markers)
                 clear-overlay t)
           (let ((case-fold-search (and case-fold-search (not at-cursor))))
+            (unless use-region
+              (when (= beg (point))
+                (setq beg nil))
+              (when (or (and backward (= end (point-min))) (= end (point-max)))
+                (setq end nil)))
             (if use-regexp
                 (apply #'perform-replace (anzu2--construct-perform-replace-arguments
                                           from to delimited beg end backward query))
