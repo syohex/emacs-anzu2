@@ -33,4 +33,11 @@
     ;; start with Upper chacater then case-sensitive search
     (should-not (anzu2--case-fold-search "ABCDE"))))
 
+(ert-deftest convert-for-lax-whitespace ()
+  "Replace white space for lax-whitespace"
+  (let ((replace-lax-whitespace t))
+    (should (string= (anzu2--convert-for-lax-whitespace "a b[" nil) "a\\s-+b\\[")))
+  (let ((replace-regexp-lax-whitespace t))
+    (should (string= (anzu2--convert-for-lax-whitespace "a b" t) "a\\s-+b"))))
+
 ;;; test.el ends here
