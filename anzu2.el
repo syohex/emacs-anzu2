@@ -1,11 +1,11 @@
 ;;; anzu2.el --- Show number of matches in mode-line while searching -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020 by Shohei YOSHIDA
+;; Copyright (C) 2022 by Shohei YOSHIDA
 
 ;; Author: Shohei YOSHIDA <syohex@gmail.com>
 ;; URL: https://github.com/syohex/emacs-anzu2
 ;; Version: 0.62
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "28.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
