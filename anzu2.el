@@ -785,7 +785,7 @@
             (unless use-region
               (when (= beg (point))
                 (setq beg nil))
-              (when (or (and backward (= end (point-min))) (= end (point-max)))
+              (when (and (not beg) (or (and backward (= end (point-min))) (= end (point-max))))
                 (setq end nil)))
             (if use-regexp
                 (apply #'perform-replace (anzu2--construct-perform-replace-arguments
