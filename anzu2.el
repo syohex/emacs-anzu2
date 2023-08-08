@@ -710,12 +710,14 @@
            when (= pos curpoint)
            return i))
 
-(defadvice replace-highlight (before anzu2-replace-highlight activate)
+(defun anzu2--before-replace-highlight (&rest args)
   (when (and (eq anzu2--state 'replace) anzu2--replaced-markers)
-    (let ((index (anzu2--current-replaced-index (ad-get-arg 0))))
+    (let ((index (anzu2--current-replaced-index (car args))))
       (when (or (not index) (/= index anzu2--current-position))
         (force-mode-line-update)
         (setq anzu2--current-position (or index 1))))))
+
+(advice-add 'replace-highlight :before #'anzu2--before-replace-highlight)
 
 (defun anzu2--set-replaced-markers (from beg end use-regexp)
   (save-excursion
@@ -738,13 +740,13 @@
                  (cl-return nil))))))
 
 (cl-defun anzu2--query-replace-common (use-regexp
-                                       &key at-cursor thing prefix-arg (query t) isearch-p)
+                                       &key at-cursor thing prefix-argument (query t) isearch-p)
   (anzu2--cons-mode-line 'replace-query)
   (when (and (use-region-p) (region-noncontiguous-p))
     (setq anzu2--region-noncontiguous (funcall region-extract-function 'bounds)))
   (let* ((use-region (use-region-p))
          (orig-point (point))
-         (backward (anzu2--replace-backward-p prefix-arg))
+         (backward (anzu2--replace-backward-p prefix-argument))
          (overlay-limit (anzu2--overlay-limit backward))
          (beg (anzu2--region-begin use-region (anzu2--begin-thing at-cursor thing) backward))
          (end (anzu2--region-end use-region thing backward))
@@ -805,7 +807,7 @@
 (defun anzu2-query-replace-at-cursor (arg)
   "Replace symbol at cursor with to-string."
   (interactive "p")
-  (anzu2--query-replace-common t :at-cursor t :prefix-arg arg))
+  (anzu2--query-replace-common t :at-cursor t :prefix-argument arg))
 
 ;;;###autoload
 (defun anzu2-query-replace-at-cursor-thing ()
@@ -817,13 +819,13 @@
 (defun anzu2-query-replace (arg)
   "anzu version of `query-replace'."
   (interactive "p")
-  (anzu2--query-replace-common nil :prefix-arg arg))
+  (anzu2--query-replace-common nil :prefix-argument arg))
 
 ;;;###autoload
 (defun anzu2-query-replace-regexp (arg)
   "anzu version of `query-replace-regexp'."
   (interactive "p")
-  (anzu2--query-replace-common t :prefix-arg arg))
+  (anzu2--query-replace-common t :prefix-argument arg))
 
 ;;;###autoload
 (defun anzu2-replace-at-cursor-thing ()
@@ -851,7 +853,7 @@
                              (> (mark) (point))
                            (< (mark) (point))))))
       (goto-char isearch-other-end))
-    (anzu2--query-replace-common use-regexp :prefix-arg arg :isearch-p t)))
+    (anzu2--query-replace-common use-regexp :prefix-argument arg :isearch-p t)))
 
 ;;;###autoload
 (defun anzu2-isearch-query-replace (arg)
