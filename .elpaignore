@@ -1,0 +1,6 @@
+.elpaignore
+.git
+.github
+.gitignore
+test
+Makefile
