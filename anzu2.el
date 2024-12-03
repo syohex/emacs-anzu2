@@ -44,10 +44,6 @@
   "Show searched position in mode-line"
   :group 'isearch)
 
-(defcustom anzu2-mode-lighter " Anzu2"
-  "Lighter of anzu2-mode"
-  :type 'string)
-
 (defcustom anzu2-minimum-input-length 1
   "Minimum input length to enable anzu"
   :type 'integer)
@@ -275,7 +271,7 @@
   "minor-mode which display search information in mode-line."
   :init-value nil
   :global     nil
-  :lighter    anzu2-mode-lighter
+  :lighter    ""
   (if anzu2-mode
       (progn
         (setq-local anzu2--state nil)
