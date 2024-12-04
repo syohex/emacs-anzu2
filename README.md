@@ -100,11 +100,6 @@ Face of to-string of replacement
 ![anzu2-any-position](image/anzu-any-position.png)
 
 
-##### `anzu2-mode-lighter`
-
-Mode name in `mode-line`. Default is ` Anzu`.
-
-
 ##### `anzu2-input-idle-delay`(Default is `0.05`)
 
 Delay second of updating mode-line information when you input from-string
@@ -147,7 +142,6 @@ This parameter is same as `thing-at-point`.
                     :foreground "yellow" :weight 'bold)
 
 (custom-set-variables
- '(anzu2-mode-lighter "")
  '(anzu2-search-threshold 1000)
  '(anzu2-replace-threshold 50))
 
