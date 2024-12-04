@@ -219,9 +219,10 @@
 (defun anzu2--update-post-hook ()
   (anzu2--update isearch-string))
 
+(defvar anzu2--mode-line-modified nil)
 (defconst anzu2--mode-line-format '(:eval (anzu2--update-mode-line)))
 
-(defsubst anzu2--mode-line-not-set-p ()
+(defsubst anzu2--has-anzu2-mode-line-format ()
   (and (consp mode-line-format)
        (member anzu2--mode-line-format mode-line-format)))
 
@@ -230,8 +231,9 @@
 
 (defun anzu2--cons-mode-line (state)
   (setq anzu2--state state)
-  (when (not (anzu2--mode-line-not-set-p))
-    (setq mode-line-format (cons anzu2--mode-line-format mode-line-format))))
+  (unless (anzu2--has-anzu2-mode-line-format)
+    (setq mode-line-format (cons anzu2--mode-line-format mode-line-format)
+          eanzu2--mode-line-modified t)))
 
 (defsubst anzu2--reset-status ()
   (setq anzu2--total-matched 0
@@ -244,8 +246,9 @@
 
 (defun anzu2--reset-mode-line ()
   (anzu2--reset-status)
-  (when (anzu2--mode-line-not-set-p)
-    (setq mode-line-format (delete anzu2--mode-line-format mode-line-format))))
+  (when anzu2--mode-line-modified
+    (setq mode-line-format (delete anzu2--mode-line-format mode-line-format)
+          anzu2--mode-line-modified nil)))
 
 (defun anzu2--format-here-position (here total)
   (if (and anzu2--overflow-p (zerop here))
