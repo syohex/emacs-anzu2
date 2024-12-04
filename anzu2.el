@@ -233,7 +233,7 @@
   (setq anzu2--state state)
   (unless (anzu2--has-anzu2-mode-line-format)
     (setq mode-line-format (cons anzu2--mode-line-format mode-line-format)
-          eanzu2--mode-line-modified t)))
+          anzu2--mode-line-modified t)))
 
 (defsubst anzu2--reset-status ()
   (setq anzu2--total-matched 0
