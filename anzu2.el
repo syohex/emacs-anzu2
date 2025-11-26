@@ -70,7 +70,7 @@
   :type 'symbol)
 
 (defface anzu2-mode-line
-  '((t (:foreground "magenta" :weight bold)))
+  '((t (:foreground "yellow" :weight extra-bold)))
   "face of anzu modeline")
 
 (defface anzu2-mode-line-no-match
